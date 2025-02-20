@@ -46,7 +46,7 @@ def get_sensor_data():
             elif "fan2" in line:
                 fan_speed2 = line.split(":")[1].split("RPM")[0].strip()
 
-        return f"CPU: {cpu_temp}°C . {cpu_usage}% | {fan_speed1} {fan_speed2} rpm"
+        return f"CPU: {cpu_temp}°C . {cpu_usage}%     ҉  {fan_speed1} {fan_speed2} rpm"
     except Exception as e:
         return f"Error: {e}"
 
