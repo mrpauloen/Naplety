@@ -1,26 +1,4 @@
-"""
-The provided code is a Python script that creates a system tray applet to monitor CPU temperature, fan speeds, and CPU usage. It uses several libraries, including PIL for image creation, pystray for system tray integration, subprocess for running shell commands, time for sleep intervals, threading for concurrent execution, and psutil for system utilization information.
-
-The get_sensor_data function retrieves CPU temperature, fan speeds, and CPU usage. It runs the sensors command using subprocess.run and parses the output to extract the relevant data. If the command fails or an error occurs, it returns an error message.
-
-The create_icon function generates an icon image with the sensor data text. It creates a new image with a transparent background, draws the text on it, and centers the text vertically. It attempts to use a specific font and falls back to the default font if the specified one is unavailable.
-
-The update_icon function continuously updates the tray icon with the latest sensor data. It runs in an infinite loop, updating the icon and its title every second.
-
-The close_applet function stops the tray applet when the "Exit" menu item is selected.
-
-The run_applet function initializes and runs the tray applet. It creates a pystray.Icon object with the initial icon and a menu containing the "Exit" option. It starts a separate thread to update the icon and runs the applet.
-
-Finally, the script checks if it is being run as the main module and calls run_applet to start the applet.
-
-Author: Paweł Nowak
-We współpracy z AI
-Wydanie pierwsze 2025.02
-v 0.1
-
-"""
-
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 import pystray
 import subprocess
 import time
@@ -34,9 +12,8 @@ def get_sensor_data():
         lines = result.stdout.split("\n")
 
         cpu_temp = "N/A"
-        fan_speed1 = "0"
-        fan_speed2 = "0"
-        cpu_usage = psutil.cpu_percent(interval=1)  # Pobiera % użycia CPU
+        fan_speed1, fan_speed2 = "0", "0"
+        cpu_usage = psutil.cpu_percent(interval=1)
 
         for line in lines:
             if "Package id" in line:
@@ -46,49 +23,30 @@ def get_sensor_data():
             elif "fan2" in line:
                 fan_speed2 = line.split(":")[1].split("RPM")[0].strip()
 
-        return f"CPU: {cpu_temp}°C . {cpu_usage}%     ҉  {fan_speed1} {fan_speed2} rpm"
+        return f"CPU: {cpu_temp}°C | Obciążenie: {cpu_usage}% | Fan1: {fan_speed1} rpm | Fan2: {fan_speed2} rpm"
     except Exception as e:
         return f"Error: {e}"
 
-from PIL import Image, ImageDraw, ImageFont
-
 def create_icon():
-    """Tworzy ikonę z tekstem i centruje go w poziomie i pionie."""
-
-    text = get_sensor_data()
-
-    font_size = 20  # Możesz dostosować wielkość czcionki
-    width, height = 500, 35  # Dopasuj szerokość do ilości tekstu
-
-    img = Image.new("RGBA", (width, height), (0, 0, 0, 0))
+    """Tworzy minimalistyczną ikonę."""
+    size = 32  # Standardowy rozmiar ikony tray
+    img = Image.new("RGBA", (size, size), (0, 0, 0, 255))  # Czarna ikona
     draw = ImageDraw.Draw(img)
 
-    try:
-        font = ImageFont.truetype("DejaVuSansCondensed.ttf", font_size)
-    except IOError:
-        font = ImageFont.load_default()  # Awaryjne ustawienie w razie braku czcionki
-
-    # Nowe podejście do pobierania rozmiaru tekstu
-    text_bbox = draw.textbbox((0, 0), text, font=font)
-    text_width = text_bbox[2] - text_bbox[0]
-    text_height = text_bbox[3] - text_bbox[1]
-
-    # Wycentrowanie tekstu
-    #text_x = (width - text_width) // 2
-    text_y = (height - text_height) // 2
-
-    draw.text((5, text_y), text, font=font, fill=(255, 255, 255))
+    # Ikona wentylatora jako okrąg
+    draw.ellipse((6, 6, 26, 26), outline="white", width=2)
 
     return img
 
-
-
 def update_icon(icon):
-    """Aktualizuje ikonę w trayu."""
+    """Aktualizuje ikonę w trayu + wysyła powiadomienia."""
     while True:
         icon.icon = create_icon()
-        icon.title = get_sensor_data()
-        time.sleep(1)
+
+        # Wysyłanie powiadomienia zamiast title (bo title powoduje błąd)
+        subprocess.Popen(["notify-send", "Monitor CPU", get_sensor_data()], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+        time.sleep(60)  # Powiadomienie co 60 sekund
 
 def close_applet(icon, item):
     """Zamyka aplet."""
