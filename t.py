@@ -25,9 +25,9 @@ def create_icon():
     temp = get_sensor_data()
 
     # Rozmiar ikony
-    icon_width = 126  # Szersza ikona (możesz testować 128)
+    icon_width = 128  # Szersza ikona (możesz testować 128)
     icon_height = 64  # Wysokość
-    font_size = 30  # Większa czcionka dla lepszej widoczności
+    font_size = 50  # Większa czcionka dla lepszej widoczności
 
     img = Image.new("RGBA", (icon_width, icon_height), (0, 0, 0, 255))
     draw = ImageDraw.Draw(img)
@@ -63,7 +63,7 @@ def create_icon():
     draw.rectangle([0, 0, icon_width - 1, icon_height - 1], outline=(255, 255, 255, 255), width=2)
 
     # Dodanie temperatury
-    draw.text((text_x, text_y), temp + "°C", font=font, fill=(255, 255, 255))
+    draw.text((1, 1), temp + "°C", font=font, fill=(255, 255, 255))
 
     return img
 
